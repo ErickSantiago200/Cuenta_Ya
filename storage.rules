@@ -1,0 +1,28 @@
+rules_version = '2';
+
+// Reglas de Firebase Storage para Cuenta Ya.
+// Cada usuario autenticado solo puede leer, crear, reemplazar o eliminar sus propios documentos.
+// Todo lo que no coincide con una regla queda denegado (no hay acceso público).
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function esPropietario(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Documentos Anexos: un archivo por tipo, en usuarios/{uid}/anexos/{tipo}/documento
+    match /usuarios/{uid}/anexos/{tipo}/documento {
+      allow read, delete: if esPropietario(uid);
+
+      allow create, update: if esPropietario(uid)
+        && tipo in ['seguridad-social', 'factura-cuenta-cobro', 'afc-fvp', 'dependientes']
+        && request.resource.size > 0
+        && request.resource.size <= 10 * 1024 * 1024
+        && request.resource.contentType in [
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+    }
+  }
+}

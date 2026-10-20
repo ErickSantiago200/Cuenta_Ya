@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/*
+ * Sistema visual de Cuenta Ya.
+ * Todos los colores de la interfaz salen de estos tokens; para ajustar la paleta, cambia solo este bloque.
+ * Tailwind v4 genera las utilidades a partir del nombre: --color-primary → bg-primary, text-primary, border-primary…
+ *
+ * Contraste (WCAG AA, texto normal ≥ 4.5:1):
+ *  - primary / ink sobre card: > 12:1      - action ↔ blanco: 4.9:1 (botones y enlaces)
+ *  - ink-muted sobre card: 4.8:1 (sobre canvas solo 4.4:1 → usar ink para texto pequeño)
+ *  - accent (dorado) NO es apto como texto sobre blanco (1.9:1): úsalo como fondo o detalle,
+ *    con texto primary encima (7:1), o como texto sobre primary.
+ */
+@theme {
+  --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+
+  /* Marca */
+  --color-primary: #17324d; /* Azul petróleo: navegación y títulos */
+  --color-primary-hover: #10263b;
+  --color-primary-soft: #e7eef4;
+  --color-action: #167d83; /* Verde azulado: botones y acciones principales */
+  --color-action-hover: #11666b; /* También para texto sobre action-soft */
+  --color-action-soft: #e2f1f1;
+  --color-accent: #e8b65c; /* Dorado suave: solo detalles destacados */
+  --color-accent-soft: #fbf1dd;
+
+  /* Superficies, texto y bordes */
+  --color-canvas: #f3f6f8;
+  --color-card: #ffffff;
+  --color-ink: #243447;
+  --color-ink-muted: #64748b;
+  --color-line: #dce4ea;
+
+  /* Estados (texto sobre su fondo *-soft ≥ 4.5:1) */
+  --color-success: #1f7a4d;
+  --color-success-soft: #e6f4ec;
+  --color-warning: #8a5300;
+  --color-warning-soft: #fbf1dd;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdecea;
+
+  /* Sombras suaves teñidas con el azul de marca */
+  --shadow-card: 0 1px 2px rgb(23 50 77 / 0.06), 0 4px 16px rgb(23 50 77 / 0.06);
+  --shadow-raised: 0 2px 4px rgb(23 50 77 / 0.06), 0 12px 32px rgb(23 50 77 / 0.12);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-canvas font-sans text-ink antialiased;
+  }
+
+  /* Foco visible y consistente para navegación con teclado */
+  :where(a, button, [role="button"], summary):focus-visible {
+    @apply rounded-lg outline-2 outline-offset-2 outline-action;
+  }
+}
