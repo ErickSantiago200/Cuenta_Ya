@@ -1,11 +1,14 @@
-import { CircleAlert, CircleCheck, CircleDashed, FileText, Loader2, RefreshCw, Upload, X } from 'lucide-react'
-import { useId, useRef, type ChangeEvent } from 'react'
+import { CircleAlert, CircleCheck, CircleDashed, FileText, Loader2, PencilLine, RefreshCw, Upload, X } from 'lucide-react'
+import { useId, useRef, type ChangeEvent, type ReactNode } from 'react'
+import { useCuentaCobro } from '../../cuenta/CuentaCobroContext'
 import type { DefinicionAnexo } from '../../data/anexos'
-import { useValidacionAnexo, type EstadoValidacion } from '../../hooks/useValidacionAnexo'
+import type { EstadoValidacion } from '../../hooks/useValidacionAnexo'
 import { ACCEPT_ANEXOS, formatBytes } from '../../utils/files'
+import type { EstadoRequisito } from '../../utils/soportes'
 import { FormAlert } from '../auth/FormAlert'
 import { Button } from '../ui/Button'
 import { StatusBadge } from '../ui/StatusBadge'
+import { RequisitoBadge } from './RequisitoBadge'
 
 function Estado({ estado }: { estado: EstadoValidacion }) {
   switch (estado.fase) {
@@ -14,14 +17,25 @@ function Estado({ estado }: { estado: EstadoValidacion }) {
     case 'validando':
       return <StatusBadge tone="info" icon={Loader2}>Validando…</StatusBadge>
     case 'valido':
-      return <StatusBadge tone="success" icon={CircleCheck}>Validado localmente, sin guardar</StatusBadge>
+      return <StatusBadge tone="info" icon={CircleCheck}>Validado localmente, sin guardar</StatusBadge>
     case 'invalido':
       return <StatusBadge tone="danger" icon={CircleAlert}>No válido</StatusBadge>
   }
 }
 
-export function AnexoValidatorCard({ anexo }: { anexo: DefinicionAnexo }) {
-  const { estado, seleccionar, quitar } = useValidacionAnexo()
+interface AnexoValidatorCardProps {
+  anexo: DefinicionAnexo
+  requisito: EstadoRequisito
+  /** Abre el formulario de datos del soporte (solo planilla y estampilla). */
+  onRegistrarDatos?: () => void
+  /** Resumen breve de los datos registrados. */
+  resumen?: ReactNode
+  /** Aclaración sobre el archivo de la tarjeta (p. ej. soporte general de estampillas). */
+  notaArchivo?: string
+}
+
+export function AnexoValidatorCard({ anexo, requisito, onRegistrarDatos, resumen, notaArchivo }: AnexoValidatorCardProps) {
+  const { estado, seleccionar, quitar } = useCuentaCobro().archivos[anexo.tipo]
   const inputRef = useRef<HTMLInputElement>(null)
   const tituloId = useId()
   const { icono: Icono } = anexo
@@ -43,13 +57,24 @@ export function AnexoValidatorCard({ anexo }: { anexo: DefinicionAnexo }) {
           <h2 id={tituloId} className="font-semibold text-primary">
             {anexo.titulo}
           </h2>
-          <p className="mt-0.5 text-xs text-ink-muted">PDF, DOC o DOCX · Máximo 10 MB</p>
+          {anexo.opcional && (
+            <p className="mt-1">
+              <StatusBadge tone="info">Opcional cuando corresponda</StatusBadge>
+            </p>
+          )}
+          <p className="mt-1.5 text-sm text-ink">{anexo.descripcion}</p>
+          <p className="mt-1 text-xs text-ink-muted">PDF, DOC o DOCX · Máximo 10 MB</p>
         </div>
       </header>
 
-      <div className="mt-3">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-ink-muted">Requisito:</span>
+        <RequisitoBadge estado={requisito} />
+        <span className="text-xs font-medium text-ink-muted">Archivo:</span>
         <Estado estado={estado} />
       </div>
+      {resumen && <div className="mt-2 text-sm text-ink">{resumen}</div>}
+      {notaArchivo && <p className="mt-2 text-xs text-ink-muted">{notaArchivo}</p>}
 
       <div className="mt-3 flex-1 space-y-3" aria-live="polite">
         {estado.fase === 'valido' ? (
@@ -76,8 +101,9 @@ export function AnexoValidatorCard({ anexo }: { anexo: DefinicionAnexo }) {
         )}
 
         {estado.fase === 'valido' && (
-          <FormAlert variant="success">
-            El archivo cumple los requisitos. Solo se revisó en tu navegador: no se ha subido ni guardado.
+          <FormAlert variant="info">
+            El archivo tiene un formato válido. Solo se revisó en tu navegador: no se ha subido ni guardado, y
+            Cuenta Ya no verifica su contenido.
           </FormAlert>
         )}
         {estado.fase === 'invalido' && (
@@ -88,6 +114,12 @@ export function AnexoValidatorCard({ anexo }: { anexo: DefinicionAnexo }) {
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
+        {onRegistrarDatos && (
+          <Button variant="secondary" size="sm" onClick={onRegistrarDatos} aria-haspopup="dialog">
+            <PencilLine className="h-4 w-4" aria-hidden="true" />
+            Registrar datos
+          </Button>
+        )}
         {estado.fase === 'valido' ? (
           <>
             <Button variant="secondary" size="sm" onClick={() => inputRef.current?.click()}>

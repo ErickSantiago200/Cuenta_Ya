@@ -1,7 +1,7 @@
-/** Límite por archivo de Documentos Anexos. */
+/** Límite por archivo (Documentos Anexos y firma). */
 export const MAX_ANEXO_BYTES = 10 * 1024 * 1024
 
-interface FormatoPermitido {
+interface FormatoArchivo {
   etiqueta: string
   /** Tipos MIME que los navegadores/sistemas suelen informar para esta extensión. */
   mimes: string[]
@@ -20,7 +20,13 @@ function contienePdfHeader(bytes: Uint8Array): boolean {
   return false
 }
 
-const FORMATOS: Record<string, FormatoPermitido> = {
+const JPEG: FormatoArchivo = {
+  etiqueta: 'JPG',
+  mimes: ['image/jpeg', 'image/pjpeg'],
+  firmaValida: (b) => empiezaCon(b, [0xff, 0xd8, 0xff]),
+}
+
+const FORMATOS: Record<string, FormatoArchivo> = {
   pdf: {
     etiqueta: 'PDF',
     mimes: ['application/pdf', 'application/x-pdf'],
@@ -38,17 +44,34 @@ const FORMATOS: Record<string, FormatoPermitido> = {
     // Contenedor ZIP de Office Open XML
     firmaValida: (b) => empiezaCon(b, [0x50, 0x4b, 0x03, 0x04]),
   },
+  png: {
+    etiqueta: 'PNG',
+    mimes: ['image/png'],
+    firmaValida: (b) => empiezaCon(b, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+  },
+  jpg: JPEG,
+  jpeg: JPEG,
 }
+
+/** Reglas de cada uso: extensiones permitidas y cómo se nombran en los mensajes. */
+interface ReglasArchivo {
+  extensiones: string[]
+  descripcion: string
+}
+
+const REGLAS_ANEXOS: ReglasArchivo = { extensiones: ['pdf', 'doc', 'docx'], descripcion: 'PDF (.pdf) o Word (.doc, .docx)' }
+const REGLAS_FIRMA: ReglasArchivo = { extensiones: ['pdf', 'png', 'jpg', 'jpeg'], descripcion: 'PDF, PNG o JPG' }
 
 /** Tipos que algunos sistemas informan cuando no reconocen el archivo: se decide por extensión y firma. */
 const MIME_GENERICOS = ['', 'application/octet-stream']
 
-export const ACCEPT_ANEXOS = [
-  '.pdf',
-  '.doc',
-  '.docx',
-  ...new Set(Object.values(FORMATOS).flatMap((f) => f.mimes)),
-].join(',')
+function acceptPara({ extensiones }: ReglasArchivo): string {
+  const mimes = new Set(extensiones.flatMap((e) => FORMATOS[e].mimes))
+  return [...extensiones.map((e) => `.${e}`), ...mimes].join(',')
+}
+
+export const ACCEPT_ANEXOS = acceptPara(REGLAS_ANEXOS)
+export const ACCEPT_FIRMA = acceptPara(REGLAS_FIRMA)
 
 export type ValidacionArchivo =
   | { ok: true; formato: string; mime: string }
@@ -63,16 +86,16 @@ function extensionDe(nombre: string): string {
  * Valida un archivo localmente, sin subirlo ni guardarlo:
  * extensión, tipo MIME, archivo vacío, tamaño y firma binaria (lee solo el primer KB en memoria).
  */
-export async function validarArchivoAnexo(file: File): Promise<ValidacionArchivo> {
+async function validarArchivo(file: File, reglas: ReglasArchivo): Promise<ValidacionArchivo> {
   const extension = extensionDe(file.name)
-  const formato = FORMATOS[extension]
+  const formato = reglas.extensiones.includes(extension) ? FORMATOS[extension] : undefined
 
   if (!formato) {
     return {
       ok: false,
       error: extension
-        ? `Los archivos .${extension} no están permitidos. Usa PDF (.pdf) o Word (.doc, .docx).`
-        : 'El archivo no tiene extensión. Usa PDF (.pdf) o Word (.doc, .docx).',
+        ? `Los archivos .${extension} no están permitidos. Usa ${reglas.descripcion}.`
+        : `El archivo no tiene extensión. Usa ${reglas.descripcion}.`,
     }
   }
   if (!MIME_GENERICOS.includes(file.type) && !formato.mimes.includes(file.type)) {
@@ -107,6 +130,16 @@ export async function validarArchivoAnexo(file: File): Promise<ValidacionArchivo
   }
 
   return { ok: true, formato: formato.etiqueta, mime: file.type || 'no informado por el sistema' }
+}
+
+/** Documentos Anexos: PDF, DOC o DOCX de hasta 10 MB. */
+export function validarArchivoAnexo(file: File): Promise<ValidacionArchivo> {
+  return validarArchivo(file, REGLAS_ANEXOS)
+}
+
+/** Firma del perfil: PDF, PNG o JPG/JPEG de hasta 10 MB. */
+export function validarArchivoFirma(file: File): Promise<ValidacionArchivo> {
+  return validarArchivo(file, REGLAS_FIRMA)
 }
 
 export function formatBytes(bytes: number): string {

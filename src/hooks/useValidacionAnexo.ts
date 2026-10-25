@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { validarArchivoAnexo } from '../utils/files'
 
 export interface ArchivoValidado {
-  /** Referencia en memoria al archivo elegido; se pierde al salir de la página o recargarla. */
+  /** Referencia en memoria al archivo elegido; se pierde al recargar la página o cerrar sesión. */
   file: File
   nombre: string
   tamano: number

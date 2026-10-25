@@ -1,21 +1,15 @@
-// Datos ficticios solo para maquetar la interfaz. No representan cálculos reales.
+// Menú lateral y datos de DEMOSTRACIÓN para maquetar la interfaz. No representan cálculos reales.
 import {
   Archive,
   Award,
   Calculator,
-  CalendarCheck,
   FileText,
   FolderOpen,
   House,
   Paperclip,
   ScrollText,
-  Send,
-  Wallet,
 } from 'lucide-react'
-import type { Indicador, ItemMenu, ResumenInforme } from '../types'
-
-// El nombre del usuario viene de la sesión real (Firebase); el contrato sigue siendo de ejemplo.
-export const contratoEjemplo = 'Contrato N.º 1234 de 2026'
+import type { ItemMenu, ResumenInforme } from '../types'
 
 export const itemsMenu: ItemMenu[] = [
   { id: 'inicio', etiqueta: 'Inicio', icono: House, ruta: '/' },
@@ -26,30 +20,6 @@ export const itemsMenu: ItemMenu[] = [
   { id: 'certificaciones', etiqueta: 'Certificaciones', icono: Award },
   { id: 'gestor', etiqueta: 'Gestor de Documentos', icono: FolderOpen },
   { id: 'expediente', etiqueta: 'Expediente Final', icono: Archive },
-]
-
-export const indicadores: Indicador[] = [
-  {
-    id: 'valor',
-    titulo: 'Valor del contrato',
-    valor: '$ 24.000.000',
-    detalle: 'Valor total pactado',
-    icono: Wallet,
-  },
-  {
-    id: 'pagos',
-    titulo: 'Pagos planeados',
-    valor: '6',
-    detalle: 'Cuentas de cobro programadas',
-    icono: CalendarCheck,
-  },
-  {
-    id: 'enviados',
-    titulo: 'Informes enviados',
-    valor: '3',
-    detalle: 'De 6 informes previstos',
-    icono: Send,
-  },
 ]
 
 // Resumen de DEMOSTRACIÓN para el panel principal (no son informes reales).

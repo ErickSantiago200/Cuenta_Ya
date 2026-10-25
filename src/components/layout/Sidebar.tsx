@@ -1,4 +1,4 @@
-import { LogOut, X } from 'lucide-react'
+import { LogOut, UserRound, X } from 'lucide-react'
 import { NavLink } from 'react-router'
 import { useAuth } from '../../auth/AuthContext'
 import { itemsMenu } from '../../data/mockData'
@@ -90,6 +90,24 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               <p className="truncate text-xs text-white/75">{user.email}</p>
             </div>
           )}
+          <NavLink
+            to="/mi-perfil"
+            onClick={onClose}
+            className={({ isActive }) =>
+              `${itemBase} relative mb-1 ${
+                isActive
+                  ? 'bg-white/10 text-white before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-full before:bg-accent'
+                  : 'text-white/75 hover:bg-white/5 hover:text-white'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <UserRound className={`h-5 w-5 shrink-0 ${isActive ? 'text-accent' : ''}`} />
+                Mi perfil
+              </>
+            )}
+          </NavLink>
           <button
             type="button"
             onClick={handleSignOut}
